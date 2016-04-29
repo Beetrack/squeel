@@ -266,6 +266,7 @@ module Squeel
           end
         end
 
+=begin
         def collapse_wheres(arel, wheres)
           wheres = Array(wheres)
           binaries = wheres.grep(Arel::Nodes::Binary)
@@ -279,6 +280,7 @@ module Squeel
 
           arel.where(Arel::Nodes::And.new(groups)) if groups.any?
         end
+=end
 
         def find_equality_predicates(nodes, relation_table_name = table_name)
           nodes.map { |node|
