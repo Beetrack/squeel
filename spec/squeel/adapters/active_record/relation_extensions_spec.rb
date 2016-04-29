@@ -146,7 +146,7 @@ module Squeel
             relation = Person.where(:name.matches => '%bob%')
             relation = relation.where(:name.matches => '%joe%')
             arel = relation.build_arel
-            arel.to_sql.should match /#{Q}people#{Q}.#{Q}name#{Q} [I]*LIKE '%bob%' AND #{Q}people#{Q}.#{Q}name#{Q} [I]*LIKE '%joe%'/
+            arel.to_sql.should match /\(?#{Q}people#{Q}.#{Q}name#{Q} [I]*LIKE '%bob%'\)? AND \(?#{Q}people#{Q}.#{Q}name#{Q} [I]*LIKE '%joe%'\)?/
           end
 
           it 'handles ORs between predicates' do
@@ -815,7 +815,7 @@ module Squeel
               select { [seat_order_items.amount, "seats.*"] }.
               where { seat_order_items.amount > 0 }
 
-            relation.debug_sql.should match /SELECT #{Q}seat_order_items#{Q}.#{Q}amount#{Q}, seats.\* FROM #{Q}seats#{Q} LEFT OUTER JOIN #{Q}payments#{Q} ON #{Q}payments#{Q}.#{Q}id#{Q} = #{Q}seats#{Q}.#{Q}payment_id#{Q} LEFT OUTER JOIN \(SELECT #{Q}order_items#{Q}.#{Q}orderable_id#{Q}, sum\(#{Q}order_items#{Q}.#{Q}quantity#{Q} \* #{Q}order_items#{Q}.#{Q}unit_price#{Q}\) AS amount FROM #{Q}order_items#{Q}\s+GROUP BY #{Q}order_items#{Q}.#{Q}orderable_id#{Q}\) seat_order_items ON #{Q}seats#{Q}.#{Q}id#{Q} = #{Q}seat_order_items#{Q}.#{Q}orderable_id#{Q} WHERE #{Q}seat_order_items#{Q}.#{Q}amount#{Q} > 0/
+            relation.debug_sql.should match /SELECT #{Q}seat_order_items#{Q}.#{Q}amount#{Q}, seats.\* FROM #{Q}seats#{Q} LEFT OUTER JOIN #{Q}payments#{Q} ON #{Q}payments#{Q}.#{Q}id#{Q} = #{Q}seats#{Q}.#{Q}payment_id#{Q} LEFT OUTER JOIN \(SELECT #{Q}order_items#{Q}.#{Q}orderable_id#{Q}, sum\(#{Q}order_items#{Q}.#{Q}quantity#{Q} \* #{Q}order_items#{Q}.#{Q}unit_price#{Q}\) AS amount FROM #{Q}order_items#{Q}\s+GROUP BY #{Q}order_items#{Q}.#{Q}orderable_id#{Q}\) seat_order_items ON #{Q}seats#{Q}.#{Q}id#{Q} = #{Q}seat_order_items#{Q}.#{Q}orderable_id#{Q} WHERE \(?#{Q}seat_order_items#{Q}.#{Q}amount#{Q} > 0\)?/
             relation.to_a.should have(10).seats
             relation.to_a.second.amount.to_i.should eq(10)
           end
@@ -836,14 +836,7 @@ module Squeel
             if activerecord_version_at_least('4.0.0')
               relation = Dept.joins { people_named_bill_with_low_salary }
 
-              relation.to_sql.should eq "
-                  SELECT #{Q}depts#{Q}.*
-                  FROM #{Q}depts#{Q}
-                  INNER JOIN #{Q}people#{Q} ON
-                    #{Q}people#{Q}.#{Q}dept_id#{Q} = #{Q}depts#{Q}.#{Q}id#{Q} AND
-                    #{Q}people#{Q}.#{Q}name#{Q} = 'Bill' AND
-                    #{Q}people#{Q}.#{Q}salary#{Q} < 20000
-                ".squish
+              relation.to_sql.should match /SELECT #{Q}depts#{Q}.* FROM #{Q}depts#{Q} INNER JOIN #{Q}people#{Q} ON #{Q}people#{Q}.#{Q}dept_id#{Q} = #{Q}depts#{Q}.#{Q}id#{Q} AND #{Q}people#{Q}.#{Q}name#{Q} = 'Bill' AND \(?#{Q}people#{Q}.#{Q}salary#{Q} < 20000\)?/
             else
               pending "Rails 3.x doesn't support default scope in joins"
             end
