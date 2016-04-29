@@ -36,4 +36,6 @@ else
   end
 end
 
-
+group :test do
+  gem 'simplecov'
+end

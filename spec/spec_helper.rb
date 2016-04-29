@@ -1,9 +1,14 @@
+require 'simplecov'
 require 'pry'
 require 'faker'
 require 'active_record'
 require 'active_support'
 require 'active_support/core_ext/string'
 
+SimpleCov.start do
+  add_filter "/spec/"
+  add_filter "/lib/squeel/adapters/active_record/4.1/"
+end
 module ActiveRecord
   # Shamelessly swiped from the AR test code
   class SQLCounter
